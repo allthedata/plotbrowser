@@ -42,6 +42,7 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
         self.listwidgetitemflags = QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | \
             QtCore.Qt.ItemIsDragEnabled | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled
         # figures
+        self.selecteddirectory = ''
         self.lineEdit_figwidth.editingFinished.connect(self.lineEdit_figdims_editingFinished)
         self.lineEdit_figheight.editingFinished.connect(self.lineEdit_figdims_editingFinished)
         # axes
@@ -57,7 +58,6 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
         self.comboBox_markerstyle.addItems([repr(item[0]) + " (" + item[1] + ")" for item in self.markers])
         # fonts
         self.selectedfont = QtGui.QFont("Arial")
-        self.fontdialog = QtGui.QFontDialog()
         self.on_pushButton_refreshlist_clicked()
         #self.actionCopy_path.triggered.connect(self.copy_path)
         #self.actionExit.triggered.connect(partial(self.closeEvent, QtGui.QCloseEvent()))  # use partial to pass argument to slot
@@ -184,6 +184,13 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
     def on_pushButton_tightlayout_clicked(self):
         self.fig.tight_layout()
         self.fig.canvas.draw()
+
+    @Slot()
+    def on_pushButton_savefigure_clicked(self):
+        filename = QtGui.QFileDialog.getSaveFileName(None, 'Choose filename to save to:', self.selecteddirectory)[0]
+        if len(filename) != 0:
+            self.selecteddirectory = QtCore.QFileInfo(filename).absolutePath()
+        plt.savefig(filename, dpi=self.spinBox_dpi.value())
 
     # axes
     @Slot()
@@ -732,7 +739,7 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
     # fonts
     @Slot()
     def on_pushButton_selectfont_clicked(self):
-        self.selectedfont, ok = self.fontdialog.getFont(self.selectedfont)
+        (self.selectedfont, ok) = QtGui.QFontDialog.getFont(self.selectedfont)
 
     @Slot()
     def on_pushButton_fontapply_clicked(self):  # ignores strikeout and underline options

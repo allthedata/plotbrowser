@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'plotbrowser_ui.ui'
 #
-# Created: Wed Jan 01 15:06:27 2014
+# Created: Wed Jan 01 16:15:31 2014
 #      by: pyside-uic 0.2.14 running on PySide 1.1.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -78,9 +78,9 @@ class Ui_PlotBrowser(object):
         self.pushButton_refreshlist = QtGui.QPushButton(self.figurestab)
         self.pushButton_refreshlist.setGeometry(QtCore.QRect(280, 40, 81, 23))
         self.pushButton_refreshlist.setObjectName("pushButton_refreshlist")
-        self.pushButton = QtGui.QPushButton(self.figurestab)
-        self.pushButton.setGeometry(QtCore.QRect(280, 340, 75, 23))
-        self.pushButton.setObjectName("pushButton")
+        self.pushButton_savefigure = QtGui.QPushButton(self.figurestab)
+        self.pushButton_savefigure.setGeometry(QtCore.QRect(280, 340, 75, 23))
+        self.pushButton_savefigure.setObjectName("pushButton_savefigure")
         self.checkBox_applytorcparams = QtGui.QCheckBox(self.figurestab)
         self.checkBox_applytorcparams.setGeometry(QtCore.QRect(10, 340, 111, 17))
         self.checkBox_applytorcparams.setObjectName("checkBox_applytorcparams")
@@ -97,6 +97,16 @@ class Ui_PlotBrowser(object):
         self.doubleSpinBox_figurefacealpha.setSingleStep(0.1)
         self.doubleSpinBox_figurefacealpha.setProperty("value", 1.0)
         self.doubleSpinBox_figurefacealpha.setObjectName("doubleSpinBox_figurefacealpha")
+        self.label_60 = QtGui.QLabel(self.figurestab)
+        self.label_60.setGeometry(QtCore.QRect(200, 340, 21, 16))
+        self.label_60.setObjectName("label_60")
+        self.spinBox_dpi = QtGui.QSpinBox(self.figurestab)
+        self.spinBox_dpi.setGeometry(QtCore.QRect(230, 340, 42, 22))
+        self.spinBox_dpi.setMinimum(16)
+        self.spinBox_dpi.setMaximum(1000)
+        self.spinBox_dpi.setSingleStep(16)
+        self.spinBox_dpi.setProperty("value", 96)
+        self.spinBox_dpi.setObjectName("spinBox_dpi")
         self.tabWidget.addTab(self.figurestab, "")
         self.axestab = QtGui.QWidget()
         self.axestab.setObjectName("axestab")
@@ -793,10 +803,11 @@ class Ui_PlotBrowser(object):
         self.pushButton_closefigure.setText(QtGui.QApplication.translate("PlotBrowser", "Close figure", None, QtGui.QApplication.UnicodeUTF8))
         self.pushButton_bringtofront.setText(QtGui.QApplication.translate("PlotBrowser", "Bring to front", None, QtGui.QApplication.UnicodeUTF8))
         self.pushButton_refreshlist.setText(QtGui.QApplication.translate("PlotBrowser", "Refresh list", None, QtGui.QApplication.UnicodeUTF8))
-        self.pushButton.setText(QtGui.QApplication.translate("PlotBrowser", "Save figure", None, QtGui.QApplication.UnicodeUTF8))
+        self.pushButton_savefigure.setText(QtGui.QApplication.translate("PlotBrowser", "Save figure", None, QtGui.QApplication.UnicodeUTF8))
         self.checkBox_applytorcparams.setText(QtGui.QApplication.translate("PlotBrowser", "apply to rcParams", None, QtGui.QApplication.UnicodeUTF8))
         self.pushButton_tightlayout.setText(QtGui.QApplication.translate("PlotBrowser", "Tight layout", None, QtGui.QApplication.UnicodeUTF8))
         self.label_49.setText(QtGui.QApplication.translate("PlotBrowser", "alpha:", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_60.setText(QtGui.QApplication.translate("PlotBrowser", "dpi:", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.figurestab), QtGui.QApplication.translate("PlotBrowser", "Figures", None, QtGui.QApplication.UnicodeUTF8))
         self.checkBox_labelright.setText(QtGui.QApplication.translate("PlotBrowser", "label right", None, QtGui.QApplication.UnicodeUTF8))
         self.label_14.setText(QtGui.QApplication.translate("PlotBrowser", "y scale:", None, QtGui.QApplication.UnicodeUTF8))

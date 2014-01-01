@@ -252,7 +252,7 @@
        <string>Refresh list</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton">
+     <widget class="QPushButton" name="pushButton_savefigure">
       <property name="geometry">
        <rect>
         <x>280</x>
@@ -324,6 +324,41 @@
       </property>
       <property name="value">
        <double>1.000000000000000</double>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_60">
+      <property name="geometry">
+       <rect>
+        <x>200</x>
+        <y>340</y>
+        <width>21</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>dpi:</string>
+      </property>
+     </widget>
+     <widget class="QSpinBox" name="spinBox_dpi">
+      <property name="geometry">
+       <rect>
+        <x>230</x>
+        <y>340</y>
+        <width>42</width>
+        <height>22</height>
+       </rect>
+      </property>
+      <property name="minimum">
+       <number>16</number>
+      </property>
+      <property name="maximum">
+       <number>1000</number>
+      </property>
+      <property name="singleStep">
+       <number>16</number>
+      </property>
+      <property name="value">
+       <number>96</number>
       </property>
      </widget>
     </widget>
