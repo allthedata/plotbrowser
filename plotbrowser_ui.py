@@ -2,12 +2,19 @@
 
 # Form implementation generated from reading ui file 'plotbrowser_ui.ui'
 #
-# Created: Wed Jan 01 13:22:07 2014
+# Created: Wed Jan 01 15:06:27 2014
 #      by: pyside-uic 0.2.14 running on PySide 1.1.2
 #
 # WARNING! All changes made in this file will be lost!
 
-from PySide import QtCore, QtGui
+try:
+    from PySide import QtCore, QtGui
+except ImportError:
+    import sip
+    sip.setapi('QString', 2)
+    sip.setapi('QVariant', 2)
+    from PyQt4 import QtCore, QtGui
+
 
 class Ui_PlotBrowser(object):
     def setupUi(self, PlotBrowser):
@@ -77,9 +84,6 @@ class Ui_PlotBrowser(object):
         self.checkBox_applytorcparams = QtGui.QCheckBox(self.figurestab)
         self.checkBox_applytorcparams.setGeometry(QtCore.QRect(10, 340, 111, 17))
         self.checkBox_applytorcparams.setObjectName("checkBox_applytorcparams")
-        self.checkBox_echototerminal = QtGui.QCheckBox(self.figurestab)
-        self.checkBox_echototerminal.setGeometry(QtCore.QRect(120, 340, 111, 17))
-        self.checkBox_echototerminal.setObjectName("checkBox_echototerminal")
         self.pushButton_tightlayout = QtGui.QPushButton(self.figurestab)
         self.pushButton_tightlayout.setGeometry(QtCore.QRect(240, 160, 71, 23))
         self.pushButton_tightlayout.setObjectName("pushButton_tightlayout")
@@ -791,7 +795,6 @@ class Ui_PlotBrowser(object):
         self.pushButton_refreshlist.setText(QtGui.QApplication.translate("PlotBrowser", "Refresh list", None, QtGui.QApplication.UnicodeUTF8))
         self.pushButton.setText(QtGui.QApplication.translate("PlotBrowser", "Save figure", None, QtGui.QApplication.UnicodeUTF8))
         self.checkBox_applytorcparams.setText(QtGui.QApplication.translate("PlotBrowser", "apply to rcParams", None, QtGui.QApplication.UnicodeUTF8))
-        self.checkBox_echototerminal.setText(QtGui.QApplication.translate("PlotBrowser", "echo to terminal", None, QtGui.QApplication.UnicodeUTF8))
         self.pushButton_tightlayout.setText(QtGui.QApplication.translate("PlotBrowser", "Tight layout", None, QtGui.QApplication.UnicodeUTF8))
         self.label_49.setText(QtGui.QApplication.translate("PlotBrowser", "alpha:", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.figurestab), QtGui.QApplication.translate("PlotBrowser", "Figures", None, QtGui.QApplication.UnicodeUTF8))

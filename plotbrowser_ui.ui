@@ -278,19 +278,6 @@
        <string>apply to rcParams</string>
       </property>
      </widget>
-     <widget class="QCheckBox" name="checkBox_echototerminal">
-      <property name="geometry">
-       <rect>
-        <x>120</x>
-        <y>340</y>
-        <width>111</width>
-        <height>17</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>echo to terminal</string>
-      </property>
-     </widget>
      <widget class="QPushButton" name="pushButton_tightlayout">
       <property name="geometry">
        <rect>

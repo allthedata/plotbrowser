@@ -1,43 +1,40 @@
 # -*- coding: utf-8 -*-
 """
-Plot browser in PySide/PyQt4
+plotbrowser
+===========
+
+A GUI to change the appearance of matplotlib plots, useful for quick tweaks of
+plots and for those unfamiliar with matplotlib syntax. Uses the object-oriented
+interface of matplotlib when possible.
+
+Written in Python 2.7 and PySide 1.2. Python 3 and PyQt4 should also work but
+not fully tested.
+
 Created on Nov 23 2013
 
 @author: Christopher Liman
-Features:
-
-Todo:
-
 """
 
 from __future__ import nested_scopes, generators, division, absolute_import, with_statement, print_function, unicode_literals
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-#import sip
-#import sys
-#from copy import copy
-#from re import split
-#from functools import partial
-from spyderlib.qt import QtGui
-from spyderlib.qt import QtCore
-from spyderlib.qt.QtCore import Slot
-#from PySide import QtGui
-#from PySide import QtCore
+try:
+    from PySide import QtCore, QtGui
+    from PySide.QtCore import Slot
+except ImportError:
+    import sip
+    sip.setapi('QString', 2)
+    sip.setapi('QVariant', 2)
+    from PyQt4 import QtCore, QtGui
+    import PyQt4.QtCore.pyqtSlot as Slot
 from IPython.lib import guisupport
 import webcolors
 import plotbrowser_ui
 
-#assert sip.getapi('QString') == 2
-#sys._excepthook = sys.excepthook
-#def exception_hook(exctype, value, traceback):
-#    sys._excepthook(exctype, value, traceback)
-#    sys.exit(1)
-#sys.excepthook = exception_hook
-
 
 class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
-    """Graph explorer"""
+    """Plot browser class"""
     def __init__(self, parent=None):
         super(PlotBrowser, self).__init__(parent)  # boilerplate
         self.setupUi(self)  # boilerplate
@@ -699,11 +696,13 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
     @Slot(bool)
     def on_checkBox_xgrid_clicked(self, value):
         self.ax.xaxis.grid(value)
+        self.ax.set_axisbelow(True)
         self.fig.canvas.draw()
 
     @Slot(bool)
     def on_checkBox_ygrid_clicked(self, value):
         self.ax.yaxis.grid(value)
+        self.ax.set_axisbelow(True)
         self.fig.canvas.draw()
 
     @Slot(int)
@@ -776,11 +775,6 @@ def myminortickformatter(number, pos):
     else:
         return str(numstr)[0]
 
-
-def rpx(string):
-    string = string.replace('self', repl_string)
-    print(string)
-    exec(string)
 
 if __name__ == '__main__':
     #app = QtGui.QApplication.instance()  # checks if QApplication already exists
