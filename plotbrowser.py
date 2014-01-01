@@ -52,15 +52,14 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
         self.lineEdit_xmax.editingFinished.connect(self.lineEdit_limits_editingFinished)
         self.lineEdit_ymin.editingFinished.connect(self.lineEdit_limits_editingFinished)
         self.lineEdit_ymax.editingFinished.connect(self.lineEdit_limits_editingFinished)
-        # ticks
-        # legend
         # lines
         self.linestyles = list(mpl.lines.Line2D.lineStyles.items())
         self.comboBox_linestyle.addItems([repr(item[0]) + " (" + item[1] + ")" for item in self.linestyles])
+        self.comboBox_gridstyle.addItems([repr(item[0]) + " (" + item[1] + ")" for item in self.linestyles])
         self.markers = list(mpl.markers.MarkerStyle.markers.items())
         self.comboBox_markerstyle.addItems([repr(item[0]) + " (" + item[1] + ")" for item in self.markers])
         # fonts
-        self.selectedfont = QtGui.QFont()
+        self.selectedfont = QtGui.QFont("Arial")
         self.fontdialog = QtGui.QFontDialog()
         self.on_pushButton_refreshlist_clicked()
         #self.actionCopy_path.triggered.connect(self.copy_path)
@@ -134,7 +133,6 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
         """redraw figure and update GUI"""
         self.fig = self.listWidget_figures.selectedItems()[-1].fig
         self.fig.canvas.draw()
-        # start update GUI
         figurefacecolor = self.rgb_frac_to_name(self.fig.get_facecolor()[0:3])
         self.setcurrenttext(self.comboBox_figurefacecolor, figurefacecolor)
         if self.fig.patch.get_alpha() is None:
@@ -143,7 +141,6 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
             self.doubleSpinBox_figurefacealpha.setValue(self.fig.patch.get_alpha())
         self.lineEdit_figwidth.setText(str(self.fig.get_size_inches()[0]))
         self.lineEdit_figheight.setText(str(self.fig.get_size_inches()[1]))
-        # end update GUI
         self.refresh_listWidget_axes()
 
     @Slot()
@@ -195,7 +192,7 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
     @Slot()
     def on_listWidget_axes_itemClicked(self):
         self.ax = self.fig.axes[self.listWidget_axes.selectedIndexes()[-1].row()]
-        # start update GUI axes tab
+        # update GUI axes tab
         if self.ax.xaxis.get_label_position() == 'bottom':
             self.checkBox_labeltop.setChecked(False)
         else:
@@ -222,9 +219,7 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
         self.lineEdit_xmax.setCursorPosition(0)
         self.lineEdit_ymin.setCursorPosition(0)
         self.lineEdit_ymax.setCursorPosition(0)
-        self.checkBox_xgrid.setChecked(self.ax.xaxis.majorTicks[0].gridOn)
-        self.checkBox_ygrid.setChecked(self.ax.yaxis.majorTicks[0].gridOn)
-        # start update GUI spines/ticks tab
+        # update GUI spines/ticks tab
         for (labelon, tickon, widget) in ((self.ax.xaxis.majorTicks[0].label1On, self.ax.xaxis.majorTicks[0].tick1On, self.comboBox_ticksdrawbottom),
                                           (self.ax.xaxis.majorTicks[0].label2On, self.ax.xaxis.majorTicks[0].tick2On, self.comboBox_ticksdrawtop),
                                           (self.ax.yaxis.majorTicks[0].label1On, self.ax.yaxis.majorTicks[0].tick1On, self.comboBox_ticksdrawleft),
@@ -278,7 +273,14 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
                 spinetext = self.ax.spines[spineloc].get_position()[0]
             self.setcurrenttext(spinewidget, spinetext)
         self.doubleSpinBox_spinewidth.setValue(self.ax.spines['bottom'].get_linewidth())
-        # end update GUI
+        # update GUI lines tab
+        self.checkBox_xgrid.setChecked(self.ax.xaxis.majorTicks[0].gridOn)
+        self.checkBox_ygrid.setChecked(self.ax.yaxis.majorTicks[0].gridOn)
+        index = [item[0] for item in self.linestyles].index(self.ax.xaxis.majorTicks[0].gridline.get_linestyle())
+        self.comboBox_gridstyle.setCurrentIndex(index)
+        self.doubleSpinBox_gridwidth.setValue(self.ax.xaxis.majorTicks[0].gridline.get_linewidth())
+        linecolor = self.rgb_frac_to_name(self.ax.xaxis.majorTicks[0].gridline.get_color())
+        self.setcurrenttext(self.comboBox_gridcolor, linecolor)
         self.refresh_listWidget_lines()
 
     @Slot()
@@ -395,16 +397,6 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
         self.ax.axis(value)  # get setting using axes.py line 1315, not implemented yet
         self.fig.canvas.draw()
         self.on_listWidget_axes_itemClicked()
-
-    @Slot(bool)
-    def on_checkBox_xgrid_clicked(self, value):
-        self.ax.xaxis.grid(value)
-        self.fig.canvas.draw()
-
-    @Slot(bool)
-    def on_checkBox_ygrid_clicked(self, value):
-        self.ax.yaxis.grid(value)
-        self.fig.canvas.draw()
 
     # ticks
     @Slot(str)
@@ -704,6 +696,40 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
         self.fig.canvas.draw()
         self.refresh_listWidget_lines()
 
+    @Slot(bool)
+    def on_checkBox_xgrid_clicked(self, value):
+        self.ax.xaxis.grid(value)
+        self.fig.canvas.draw()
+
+    @Slot(bool)
+    def on_checkBox_ygrid_clicked(self, value):
+        self.ax.yaxis.grid(value)
+        self.fig.canvas.draw()
+
+    @Slot(int)
+    def on_comboBox_gridstyle_currentIndexChanged(self, value):
+        try:
+            self.ax.grid(linestyle=self.linestyles[value][0])
+            self.ax.xaxis.grid(self.checkBox_xgrid.isChecked())
+            self.ax.yaxis.grid(self.checkBox_ygrid.isChecked())
+            self.fig.canvas.draw()
+        except AttributeError:
+            pass
+
+    @Slot(float)
+    def on_doubleSpinBox_gridwidth_valueChanged(self, value):
+        self.ax.grid(lineswidth=value)
+        self.ax.xaxis.grid(self.checkBox_xgrid.isChecked())
+        self.ax.yaxis.grid(self.checkBox_ygrid.isChecked())
+        self.fig.canvas.draw()
+
+    @Slot(str)
+    def on_comboBox_gridcolor_currentIndexChanged(self, value):
+        self.ax.grid(color=value)
+        self.ax.xaxis.grid(self.checkBox_xgrid.isChecked())
+        self.ax.yaxis.grid(self.checkBox_ygrid.isChecked())
+        self.fig.canvas.draw()
+
     # fonts
     @Slot()
     def on_pushButton_selectfont_clicked(self):
@@ -726,7 +752,7 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
             items += self.ax.get_xminorticklabels()
         if self.checkBox_fontapplytoyminorticklabels.isChecked():
             items += self.ax.get_yminorticklabels()
-        if self.checkBox_fontapplytolegend.isChecked():
+        if self.checkBox_fontapplytolegend.isChecked() and self.ax.legend_ is not None:
             items += self.ax.legend_.get_texts()
         for item in items:
             item.set_name(self.selectedfont.family())
