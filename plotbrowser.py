@@ -11,8 +11,6 @@ Written in Python 2.7 and PySide 1.2. Python 3 and PyQt4 should also work but
 not fully tested.
 
 Created on Nov 23 2013
-
-@author: Christopher Liman
 """
 
 from __future__ import nested_scopes, generators, division, absolute_import, with_statement, print_function, unicode_literals
@@ -59,10 +57,6 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
         # fonts
         self.selectedfont = QtGui.QFont("Arial")
         self.on_pushButton_refreshlist_clicked()
-        #self.actionCopy_path.triggered.connect(self.copy_path)
-        #self.actionExit.triggered.connect(partial(self.closeEvent, QtGui.QCloseEvent()))  # use partial to pass argument to slot
-        #self.actionExit.triggered.connect(self.close)
-        #self.treeWidget.addAction(self.actionCopy_path)  # adds action to treeWidget's right click menu
 
     def rgb_frac_to_name(self, color):
         """
@@ -787,7 +781,6 @@ if __name__ == '__main__':
     #app = QtGui.QApplication.instance()  # checks if QApplication already exists
     #if not app:  # create QApplication if it doesnt exist
     #    app = QtGui.QApplication(sys.argv)
-    repl_string = 'browser'
     app = guisupport.get_app_qt4()
     browser = PlotBrowser()
     browser.show()
