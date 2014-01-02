@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'plotbrowser_ui.ui'
 #
-# Created: Wed Jan 01 16:15:31 2014
+# Created: Wed Jan 01 21:56:29 2014
 #      by: pyside-uic 0.2.14 running on PySide 1.1.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -14,7 +14,6 @@ except ImportError:
     sip.setapi('QString', 2)
     sip.setapi('QVariant', 2)
     from PyQt4 import QtCore, QtGui
-
 
 class Ui_PlotBrowser(object):
     def setupUi(self, PlotBrowser):
@@ -778,7 +777,7 @@ class Ui_PlotBrowser(object):
         QtCore.QMetaObject.connectSlotsByName(PlotBrowser)
 
     def retranslateUi(self, PlotBrowser):
-        PlotBrowser.setWindowTitle(QtGui.QApplication.translate("PlotBrowser", "GraphExplorer", None, QtGui.QApplication.UnicodeUTF8))
+        PlotBrowser.setWindowTitle(QtGui.QApplication.translate("PlotBrowser", "PlotBrowser", None, QtGui.QApplication.UnicodeUTF8))
         self.label_30.setText(QtGui.QApplication.translate("PlotBrowser", "background color:", None, QtGui.QApplication.UnicodeUTF8))
         self.pushButton_makefigure.setText(QtGui.QApplication.translate("PlotBrowser", "Make figure", None, QtGui.QApplication.UnicodeUTF8))
         self.comboBox_figurefacecolor.setItemText(0, QtGui.QApplication.translate("PlotBrowser", "white", None, QtGui.QApplication.UnicodeUTF8))
