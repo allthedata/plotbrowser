@@ -6,14 +6,11 @@ plotbrowser
 A GUI to change the appearance of matplotlib plots, useful for quick tweaks of
 plots and for those unfamiliar with matplotlib syntax. Uses the object-oriented
 interface of matplotlib when possible.
-
-Written in Python 2.7 and PySide 1.2. Python 3 and PyQt4 should also work but
-not fully tested.
-
-Created on Nov 23 2013
 """
 
-from __future__ import nested_scopes, generators, division, absolute_import, with_statement, print_function, unicode_literals
+from __future__ import nested_scopes, generators, division, absolute_import,\
+    with_statement, print_function, unicode_literals
+
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -67,9 +64,13 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
         """
         shortcolor_to_name = {'b': 'blue', 'g': 'green', 'r': 'red', 'c': 'cyan', 'm': 'magenta',
                               'y': 'yellow', 'k': 'black', 'w': 'white'}
+        try:
+            check = isinstance(color, basestring)
+        except NameError:
+            check = isinstance(color, str)
         if color in shortcolor_to_name.keys():
             return shortcolor_to_name[color]
-        elif isinstance(color, basestring):
+        elif check:
             return color
         else:
             colorperc = [str(x * 100) + '%' for x in color]
@@ -137,7 +138,7 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
     @Slot()
     def on_listWidget_figures_itemChanged(self):
         """update figure window name"""
-        itemlist = [self.listWidget_figures.item(i) for i in xrange(self.listWidget_figures.count())]
+        itemlist = [self.listWidget_figures.item(i) for i in range(self.listWidget_figures.count())]
         for item in itemlist:
             item.fig.canvas.set_window_title(item.text())
 
@@ -184,7 +185,7 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
         filename = QtGui.QFileDialog.getSaveFileName(None, 'Choose filename to save to:', self.selecteddirectory)[0]
         if len(filename) != 0:
             self.selecteddirectory = QtCore.QFileInfo(filename).absolutePath()
-        plt.savefig(filename, dpi=self.spinBox_dpi.value())
+            plt.savefig(filename, dpi=self.spinBox_dpi.value())
 
     # axes
     @Slot()
@@ -283,7 +284,7 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
 
     @Slot()
     def on_listWidget_axes_itemChanged(self):
-        for i in xrange(self.listWidget_axes.count()):
+        for i in range(self.listWidget_axes.count()):
             self.fig.axes[i].set_title(self.listWidget_axes.item(i).text(), {'fontsize': self.fig.axes[i].title.get_size()})
             #self.fig.axes[i].set_title(self.listWidget_axes.item(i).text())  # resets title fontsize to default
         self.fig.canvas.draw()
@@ -465,7 +466,7 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
     def on_spinBox_numxminorticks_valueChanged(self, value):
         if isinstance(self.ax.xaxis.get_minor_locator(), mpl.ticker.LogLocator):
             if value >= 8:
-                subs = range(2, 10)
+                subs = list(range(2, 10))
             else:
                 # evenly distributed minor ticks for LogLocator
                 subs = np.floor(1 + np.arange(1, value + 1) * 9 / (value + 1))
@@ -628,7 +629,7 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
 
     @Slot()
     def on_listWidget_lines_itemChanged(self):
-        for i in xrange(self.listWidget_lines.count()):
+        for i in range(self.listWidget_lines.count()):
             self.ax.lines[i].set_label(self.listWidget_lines.item(i).text())
         self.fig.canvas.draw()
 
