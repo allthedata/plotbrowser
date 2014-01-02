@@ -19,6 +19,7 @@ Requires:
 Run in a terminal:
 ```sh
 ipython --pylab=qt
+run /path/to/plotbrowser.py
 ```
 
 Screenshots
