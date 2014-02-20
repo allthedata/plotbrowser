@@ -32,6 +32,14 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
     def __init__(self, parent=None):
         super(PlotBrowser, self).__init__(parent)  # boilerplate
         self.setupUi(self)  # boilerplate
+        # colorconverter
+        self.to_rgb = mpl.colors.ColorConverter().to_rgb
+        cnames = mpl.colors.cnames
+        for k, v in cnames.items():
+            cnames[k] = v.lower()
+            if k.find('grey') >= 0:
+                del cnames[k]
+        self.chexes = {v: k for k, v in cnames.items()}
         # allows editing of item names
         self.listwidgetitemflags = QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | \
             QtCore.Qt.ItemIsDragEnabled | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled
@@ -53,14 +61,6 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
         # fonts
         self.selectedfont = QtGui.QFont("Arial")
         self.on_pushButton_refreshlist_clicked()
-        # colorconverter
-        self.to_rgb = mpl.colors.ColorConverter().to_rgb
-        cnames = mpl.colors.cnames
-        for k, v in cnames.items():
-            cnames[k] = v.lower()
-            if k.find('grey') >= 0:
-                del cnames[k]
-        self.chexes = {v: k for k, v in cnames.items()}
 
     def colorconverter(self, color):
         """Returns named color if found, or hexcolor, given input named color, hexcolor, or color letter"""
