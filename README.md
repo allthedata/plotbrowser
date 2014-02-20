@@ -12,7 +12,6 @@ Requires:
 - numpy
 - matplotlib
 - pyside or pyqt4
-- webcolors
 
 Usage
 -----------

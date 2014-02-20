@@ -24,7 +24,6 @@ except ImportError:
     from PyQt4 import QtCore, QtGui
     import PyQt4.QtCore.pyqtSlot as Slot
 from IPython.lib import guisupport
-import webcolors
 import plotbrowser_ui
 
 
@@ -54,37 +53,37 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
         # fonts
         self.selectedfont = QtGui.QFont("Arial")
         self.on_pushButton_refreshlist_clicked()
+        # colorconverter
+        self.to_rgb = mpl.colors.ColorConverter().to_rgb
+        cnames = mpl.colors.cnames
+        for k, v in cnames.items():
+            cnames[k] = v.lower()
+            if k.find('grey') >= 0:
+                del cnames[k]
+        self.chexes = {v: k for k, v in cnames.items()}
 
-    def rgb_frac_to_name(self, color):
-        """
-        >>> browser.rgb_frac_to_name([.5,.5,.5])
-        'grey'
-        >>> browser.rgb_frac_to_name('k')
-        'black'
-        """
-        shortcolor_to_name = {'b': 'blue', 'g': 'green', 'r': 'red', 'c': 'cyan', 'm': 'magenta',
-                              'y': 'yellow', 'k': 'black', 'w': 'white'}
+    def colorconverter(self, color):
+        """Returns named color if found, or hexcolor, given input named color, hexcolor, or color letter"""
         try:
-            check = isinstance(color, basestring)
-        except NameError:
-            check = isinstance(color, str)
-        if color in shortcolor_to_name.keys():
-            return shortcolor_to_name[color]
-        elif check:
-            return color
-        else:
-            colorperc = [str(x * 100) + '%' for x in color]
             try:
-                return webcolors.rgb_percent_to_name(colorperc)
-            except ValueError:
-                return None
+                color = color.replace('grey', 'gray')
+            except AttributeError:
+                pass
+            hexcolor = mpl.colors.rgb2hex(self.to_rgb(color))
+            try:
+                return self.chexes[hexcolor]
+            except KeyError:
+                return hexcolor
+        except ValueError:
+            return None
 
     def setcurrenttext(self, widget, text):
+        """Convenience method"""
         widget.setCurrentIndex(widget.findText(text))
 
     @Slot()
     def on_pushButton_refreshlist_clicked(self):
-        """Refreshes figures list, selects last figure"""
+        """Refreshes figurelist, clicks last item in figurelist"""
         self.listWidget_figures.clear()
         current_row = -1
         for i in plt.get_fignums():
@@ -97,6 +96,7 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
             self.on_listWidget_figures_itemClicked()
 
     def refresh_listWidget_axes(self):
+        """Refreshes axeslist, clicks last item in axeslist"""
         self.listWidget_axes.clear()
         self.listWidget_lines.clear()
         current_row = -1
@@ -109,6 +109,7 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
             self.on_listWidget_axes_itemClicked()
 
     def refresh_listWidget_lines(self):
+        """Refreshes lineslist, clicks last item in lineslist"""
         self.listWidget_lines.clear()
         current_row = -1
         for line in self.ax.lines:
@@ -119,14 +120,13 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
             self.listWidget_lines.setCurrentRow(current_row)
             self.on_listWidget_lines_itemClicked()
 
-    # figures
+    # start methods for figures tab
     @Slot()
     def on_listWidget_figures_itemClicked(self):
-        """redraw figure and update GUI"""
+        """Updates figures tab, calls refresh_listWidget_axes"""
         self.fig = self.listWidget_figures.selectedItems()[-1].fig
         self.fig.canvas.draw()
-        figurefacecolor = self.rgb_frac_to_name(self.fig.get_facecolor()[0:3])
-        self.setcurrenttext(self.comboBox_figurefacecolor, figurefacecolor)
+        self.lineEdit_figurefacecolor.setText(self.colorconverter(self.fig.get_facecolor()))
         if self.fig.patch.get_alpha() is None:
             self.doubleSpinBox_figurefacealpha.setValue(1.0)
         else:
@@ -137,34 +137,32 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
 
     @Slot()
     def on_listWidget_figures_itemChanged(self):
-        """update figure window name"""
         itemlist = [self.listWidget_figures.item(i) for i in range(self.listWidget_figures.count())]
         for item in itemlist:
             item.fig.canvas.set_window_title(item.text())
 
     @Slot()
     def on_pushButton_makefigure_clicked(self):
-        """create new figure"""
         plt.figure()
         self.on_pushButton_refreshlist_clicked()
 
     @Slot()
     def on_pushButton_bringtofront_clicked(self):
-        """bring selected figure to front"""
         self.fig.show()  # brings back closed window
         self.fig.canvas.manager.window.raise_()
 
     @Slot()
     def on_pushButton_closefigure_clicked(self):
-        """close figure and remove from listWidget"""
         self.fig.canvas.manager.window.close()  # frees up memory
         self.on_pushButton_refreshlist_clicked()
 
-    @Slot(str)
-    def on_comboBox_figurefacecolor_currentIndexChanged(self, value):
-        if value != '':
-            self.fig.set_facecolor(value)
+    @Slot()
+    def on_lineEdit_figurefacecolor_editingFinished(self):
+        color = self.colorconverter(self.lineEdit_figurefacecolor.text())
+        if color is not None:
+            self.fig.set_facecolor(color)
             self.fig.canvas.draw()
+        self.lineEdit_figurefacecolor.setText(self.colorconverter(self.fig.get_facecolor()))
 
     @Slot(float)
     def on_doubleSpinBox_figurefacealpha_valueChanged(self, value):
@@ -187,11 +185,12 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
             self.selecteddirectory = QtCore.QFileInfo(filename).absolutePath()
             plt.savefig(filename, dpi=self.spinBox_dpi.value())
 
-    # axes
+    # start methods for axes tab
     @Slot()
     def on_listWidget_axes_itemClicked(self):
+        """Updates axes, grid, and spines/ticks tabs, calls refresh_listWidget_lines"""
         self.ax = self.fig.axes[self.listWidget_axes.selectedIndexes()[-1].row()]
-        # update GUI axes tab
+        # updates axes tab
         if self.ax.xaxis.get_label_position() == 'bottom':
             self.checkBox_labeltop.setChecked(False)
         else:
@@ -202,8 +201,7 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
             self.checkBox_labelright.setChecked(True)
         self.lineEdit_xlabel.setText(self.ax.get_xlabel())
         self.lineEdit_ylabel.setText(self.ax.get_ylabel())
-        axisfacecolor = self.rgb_frac_to_name(self.ax.patch.get_facecolor()[0:3])
-        self.setcurrenttext(self.comboBox_axisfacecolor, axisfacecolor)
+        self.lineEdit_axisfacecolor.setText(self.colorconverter(self.ax.patch.get_facecolor()))
         if self.ax.patch.get_alpha() is None:
             self.doubleSpinBox_axisfacealpha.setValue(1.0)
         else:
@@ -218,7 +216,7 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
         self.lineEdit_xmax.setCursorPosition(0)
         self.lineEdit_ymin.setCursorPosition(0)
         self.lineEdit_ymax.setCursorPosition(0)
-        # update GUI spines/ticks tab
+        # updates spines/ticks tab
         for (labelon, tickon, widget) in ((self.ax.xaxis.majorTicks[0].label1On, self.ax.xaxis.majorTicks[0].tick1On, self.comboBox_ticksdrawbottom),
                                           (self.ax.xaxis.majorTicks[0].label2On, self.ax.xaxis.majorTicks[0].tick2On, self.comboBox_ticksdrawtop),
                                           (self.ax.yaxis.majorTicks[0].label1On, self.ax.yaxis.majorTicks[0].tick1On, self.comboBox_ticksdrawleft),
@@ -272,14 +270,13 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
                 spinetext = self.ax.spines[spineloc].get_position()[0]
             self.setcurrenttext(spinewidget, spinetext)
         self.doubleSpinBox_spinewidth.setValue(self.ax.spines['bottom'].get_linewidth())
-        # update GUI lines tab
+        # updates grid section in lines tab
         self.checkBox_xgrid.setChecked(self.ax.xaxis.majorTicks[0].gridOn)
         self.checkBox_ygrid.setChecked(self.ax.yaxis.majorTicks[0].gridOn)
         index = [item[0] for item in self.linestyles].index(self.ax.xaxis.majorTicks[0].gridline.get_linestyle())
         self.comboBox_gridstyle.setCurrentIndex(index)
         self.doubleSpinBox_gridwidth.setValue(self.ax.xaxis.majorTicks[0].gridline.get_linewidth())
-        linecolor = self.rgb_frac_to_name(self.ax.xaxis.majorTicks[0].gridline.get_color())
-        self.setcurrenttext(self.comboBox_gridcolor, linecolor)
+        self.lineEdit_gridcolor.setText(self.colorconverter(self.ax.xaxis.majorTicks[0].gridline.get_color()))
         self.refresh_listWidget_lines()
 
     @Slot()
@@ -363,11 +360,13 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
         self.ax.set_ylabel(self.lineEdit_ylabel.text())
         self.fig.canvas.draw()
 
-    @Slot(str)
-    def on_comboBox_axisfacecolor_currentIndexChanged(self, value):
-        if value != '':
-            self.ax.patch.set_facecolor(value)
+    @Slot()
+    def on_lineEdit_axisfacecolor_editingFinished(self):
+        color = self.colorconverter(self.lineEdit_axisfacecolor.text())
+        if color is not None:
+            self.ax.patch.set_facecolor(color)
             self.fig.canvas.draw()
+        self.lineEdit_axisfacecolor.setText(self.colorconverter(self.ax.patch.get_facecolor()))
 
     @Slot(float)
     def on_doubleSpinBox_axisfacealpha_valueChanged(self, value):
@@ -397,7 +396,7 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
         self.fig.canvas.draw()
         self.on_listWidget_axes_itemClicked()
 
-    # ticks
+    # start methods for spines/ticks tab
     @Slot(str)
     def on_comboBox_ticksdrawbottom_currentIndexChanged(self, value):
         if value == 'ticks only':
@@ -517,33 +516,33 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
     @Slot(float)
     def on_doubleSpinBox_ticksmajorlength_valueChanged(self, value):
         self.ax.tick_params(which='major', length=value)
-        if self.checkBox_applytorcparams.isChecked():
-            plt.rcParams['xtick.major.size'] = value
-            plt.rcParams['ytick.major.size'] = value
+#        if self.checkBox_applytorcparams.isChecked():
+#            plt.rcParams['xtick.major.size'] = value
+#            plt.rcParams['ytick.major.size'] = value
         self.fig.canvas.draw()
 
     @Slot(float)
     def on_doubleSpinBox_ticksmajorwidth_valueChanged(self, value):
         self.ax.tick_params(which='major', width=value)
-        if self.checkBox_applytorcparams.isChecked():
-            plt.rcParams['xtick.major.width'] = value
-            plt.rcParams['ytick.major.width'] = value
+#        if self.checkBox_applytorcparams.isChecked():
+#            plt.rcParams['xtick.major.width'] = value
+#            plt.rcParams['ytick.major.width'] = value
         self.fig.canvas.draw()
 
     @Slot(float)
     def on_doubleSpinBox_ticksminorlength_valueChanged(self, value):
         self.ax.tick_params(which='minor', length=value)
-        if self.checkBox_applytorcparams.isChecked():
-            plt.rcParams['xtick.minor.size'] = value
-            plt.rcParams['ytick.minor.size'] = value
+#        if self.checkBox_applytorcparams.isChecked():
+#            plt.rcParams['xtick.minor.size'] = value
+#            plt.rcParams['ytick.minor.size'] = value
         self.fig.canvas.draw()
 
     @Slot(float)
     def on_doubleSpinBox_ticksminorwidth_valueChanged(self, value):
         self.ax.tick_params(which='minor', width=value)
-        if self.checkBox_applytorcparams.isChecked():
-            plt.rcParams['xtick.minor.width'] = value
-            plt.rcParams['ytick.minor.width'] = value
+#        if self.checkBox_applytorcparams.isChecked():
+#            plt.rcParams['xtick.minor.width'] = value
+#            plt.rcParams['ytick.minor.width'] = value
         self.fig.canvas.draw()
 
     @Slot(str)
@@ -596,9 +595,14 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
             spine.set_linewidth(value)
         self.fig.canvas.draw()
 
-    # legend
+    # start methods for legend tab
+    @Slot()
+    def on_lineEdit_legendfacecolor_editingFinished(self):
+        self.lineEdit_legendfacecolor.setText(str(self.colorconverter(self.lineEdit_legendfacecolor.text())))
+
     @Slot()
     def on_pushButton_legendapply_clicked(self):
+        """Updates legend"""
         if self.checkBox_legendon.isChecked():
             self.ax.legend(frameon=self.checkBox_legendframe.isChecked(), fancybox=self.checkBox_legendfancybox.isChecked(),
                            shadow=self.checkBox_legendshadow.isChecked(), framealpha=self.doubleSpinBox_legendalpha.value(),
@@ -606,26 +610,27 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
                            loc='best')
             if self.ax.legend_ is not None:
                 self.ax.legend_.draggable(True)
-                self.ax.legend_.get_frame().set_facecolor(self.comboBox_legendfacecolor.currentText())
+                color = self.colorconverter(self.lineEdit_legendfacecolor.text())
+                if color is not None:
+                    self.ax.legend_.get_frame().set_facecolor(color)
         elif self.ax.legend_ is not None:
             self.ax.legend_.set_visible(False)
         self.fig.canvas.draw()
 
-    # lines
+    # start methods for lines tab
     @Slot()
     def on_listWidget_lines_itemClicked(self):
+        """Updates lines tab"""
         self.line = self.ax.lines[self.listWidget_lines.selectedIndexes()[-1].row()]
         index = [item[0] for item in self.linestyles].index(self.line.get_linestyle())
         self.comboBox_linestyle.setCurrentIndex(index)
         self.doubleSpinBox_linewidth.setValue(self.line.get_linewidth())
-        linecolor = self.rgb_frac_to_name(self.line.get_color())
-        self.setcurrenttext(self.comboBox_linecolor, linecolor)
+        self.lineEdit_linecolor.setText(self.colorconverter(self.line.get_color()))
         index = [item[0] for item in self.markers].index(self.line.get_marker())
         self.comboBox_markerstyle.setCurrentIndex(index)
         self.spinBox_markersize.setValue(self.line.get_markersize())
-        markercolor = self.rgb_frac_to_name(self.line.get_markerfacecolor())
-        self.setcurrenttext(self.comboBox_markercolor, markercolor)
-        self.on_pushButton_legendapply_clicked()
+        self.lineEdit_markercolor.setText(self.colorconverter(self.line.get_markerfacecolor()))
+        #self.on_pushButton_legendapply_clicked()
 
     @Slot()
     def on_listWidget_lines_itemChanged(self):
@@ -659,10 +664,13 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
         self.line.set_linewidth(value)
         self.fig.canvas.draw()
 
-    @Slot(str)
-    def on_comboBox_linecolor_currentIndexChanged(self, value):
-        self.line.set_color(value)
-        self.fig.canvas.draw()
+    @Slot()
+    def on_lineEdit_linecolor_editingFinished(self):
+        color = self.colorconverter(self.lineEdit_linecolor.text())
+        if color is not None:
+            self.line.set_color(color)
+            self.fig.canvas.draw()
+        self.lineEdit_linecolor.setText(self.colorconverter(self.line.get_color()))
 
     @Slot(int)
     def on_comboBox_markerstyle_currentIndexChanged(self, value):
@@ -677,11 +685,14 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
         self.line.set_markersize(value)
         self.fig.canvas.draw()
 
-    @Slot(str)
-    def on_comboBox_markercolor_currentIndexChanged(self, value):
-        self.line.set_markerfacecolor(value)
-        self.line.set_markeredgecolor(value)
-        self.fig.canvas.draw()
+    @Slot()
+    def on_lineEdit_markercolor_editingFinished(self):
+        color = self.colorconverter(self.lineEdit_markercolor.text())
+        if color is not None:
+            self.line.set_markerfacecolor(color)
+            self.line.set_markeredgecolor(color)
+            self.fig.canvas.draw()
+        self.lineEdit_markercolor.setText(self.colorconverter(self.line.get_markerfacecolor()))
 
     @Slot()
     def on_pushButton_hline_clicked(self):
@@ -710,7 +721,7 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
     @Slot(int)
     def on_comboBox_gridstyle_currentIndexChanged(self, value):
         try:
-            self.ax.grid(linestyle=self.linestyles[value][0])
+            self.ax.grid(linestyle=self.linestyles[value][0])  # side effect of turning on x and y grids
             self.ax.xaxis.grid(self.checkBox_xgrid.isChecked())
             self.ax.yaxis.grid(self.checkBox_ygrid.isChecked())
             self.fig.canvas.draw()
@@ -719,25 +730,33 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
 
     @Slot(float)
     def on_doubleSpinBox_gridwidth_valueChanged(self, value):
-        self.ax.grid(lineswidth=value)
+        self.ax.grid(linewidth=value)
         self.ax.xaxis.grid(self.checkBox_xgrid.isChecked())
         self.ax.yaxis.grid(self.checkBox_ygrid.isChecked())
         self.fig.canvas.draw()
 
-    @Slot(str)
-    def on_comboBox_gridcolor_currentIndexChanged(self, value):
-        self.ax.grid(color=value)
-        self.ax.xaxis.grid(self.checkBox_xgrid.isChecked())
-        self.ax.yaxis.grid(self.checkBox_ygrid.isChecked())
-        self.fig.canvas.draw()
+    @Slot()
+    def on_lineEdit_gridcolor_editingFinished(self):
+        color = self.colorconverter(self.lineEdit_gridcolor.text())
+        if color is not None:
+            self.ax.grid(color=color)
+            self.ax.xaxis.grid(self.checkBox_xgrid.isChecked())
+            self.ax.yaxis.grid(self.checkBox_ygrid.isChecked())
+            self.fig.canvas.draw()
+        self.lineEdit_gridcolor.setText(self.colorconverter(self.ax.xaxis.majorTicks[0].gridline.get_color()))
 
-    # fonts
+    # start methods for fonts tab
     @Slot()
     def on_pushButton_selectfont_clicked(self):
         (self.selectedfont, ok) = QtGui.QFontDialog.getFont(self.selectedfont)
 
     @Slot()
+    def on_lineEdit_fontcolor_editingFinished(self):
+        self.lineEdit_fontcolor.setText(str(self.colorconverter(self.lineEdit_fontcolor.text())))
+
+    @Slot()
     def on_pushButton_fontapply_clicked(self):  # ignores strikeout and underline options
+        """Updates fonts in the figure"""
         items = []
         if self.checkBox_fontapplytotitle.isChecked():
             items.append(self.ax.title)
@@ -758,7 +777,9 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
         for item in items:
             item.set_name(self.selectedfont.family())
             item.set_size(self.selectedfont.pointSize())
-            item.set_color(self.comboBox_fontcolor.currentText())
+            color = self.colorconverter(self.lineEdit_fontcolor.text())
+            if color is not None:
+                item.set_color(color)
             if self.selectedfont.bold():
                 item.set_weight('bold')
             else:
@@ -771,6 +792,7 @@ class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
 
 
 def myminortickformatter(number, pos):
+    """Labels the minor ticks with their first digit"""
     numstr = str(format(number, 'e'))
     if numstr[0] == '-':
         return str(numstr)[1]
