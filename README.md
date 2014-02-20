@@ -19,8 +19,17 @@ Usage
 Run in a terminal:
 ```sh
 ipython --pylab=qt
-run /path/to/plotbrowser.py
+run /path/to/plotbrowser/plotbrowser.py
 ```
+Alternatively:
+```sh
+ipython --pylab=qt
+import os
+os.chdir("/path/to/plotbrowser")
+import plotbrowser
+plotbrowser.main()
+```
+
 If you want to use the GUI to make the initial plot, first create a figure, then a subplot or axes, then a line. Or make plots the normal way with the interactive shell or a script, then click "refresh list" in the GUI to update the figure list widget. One feature that may not be apparent is that you can double-click an item in the list widgets of figures, axes, and lines to change the window title, axes title, and line label respectively.
 
 Screenshots

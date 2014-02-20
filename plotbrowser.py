@@ -800,12 +800,16 @@ def myminortickformatter(number, pos):
         return str(numstr)[0]
 
 
-if __name__ == '__main__':
+def main():
     #app = QtGui.QApplication.instance()  # checks if QApplication already exists
     #if not app:  # create QApplication if it doesnt exist
     #    app = QtGui.QApplication(sys.argv)
     app = guisupport.get_app_qt4()
+    global browser  # otherwise window appears and immediately disappears
     browser = PlotBrowser()
     browser.show()
-    guisupport.start_event_loop_qt4(app)  # doesn't block terminal when run in ipython
-    #app.exec_()
+    guisupport.start_event_loop_qt4(app)
+    #app.exec_()  # this results in QCoreApplication::exec: The event loop is already running
+
+if __name__ == '__main__':
+    main()
