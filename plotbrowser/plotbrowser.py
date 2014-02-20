@@ -24,10 +24,13 @@ except ImportError:
     from PyQt4 import QtCore, QtGui
     import PyQt4.QtCore.pyqtSlot as Slot
 from IPython.lib import guisupport
-import plotbrowser_ui
+if __name__ == '__main__':
+    from plotbrowser_ui import Ui_PlotBrowser
+else:
+    from .plotbrowser_ui import Ui_PlotBrowser
 
 
-class PlotBrowser(QtGui.QMainWindow, plotbrowser_ui.Ui_PlotBrowser):
+class PlotBrowser(QtGui.QMainWindow, Ui_PlotBrowser):
     """Plot browser class"""
     def __init__(self, parent=None):
         super(PlotBrowser, self).__init__(parent)  # boilerplate
@@ -800,7 +803,7 @@ def myminortickformatter(number, pos):
         return str(numstr)[0]
 
 
-def main():
+def run():
     #app = QtGui.QApplication.instance()  # checks if QApplication already exists
     #if not app:  # create QApplication if it doesnt exist
     #    app = QtGui.QApplication(sys.argv)
@@ -812,4 +815,4 @@ def main():
     #app.exec_()  # this results in QCoreApplication::exec: The event loop is already running
 
 if __name__ == '__main__':
-    main()
+    run()
