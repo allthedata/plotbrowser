@@ -24,15 +24,15 @@ python setup.py install
 Usage
 -----------
 
-Once installed:
-```python
+Once installed, from ipython:
+```ipython
 import plotbrowser
 plotbrowser.plotbrowser.run() 
 ```
 
-Or to run as a script:
-```sh
-run plotbrowser/plotbrowser.py
+Or to run as a script from ipython (working directory must contain plotbrowser.py):
+```ipython
+%run plotbrowser.py
 ```
 
 If you want to use the GUI to make the initial plot, first create a figure, then a subplot or axes, then a line. Or make plots the normal way with the interactive shell or a script, then click "refresh list" in the GUI to update the figure list widget. One feature that may not be apparent is that you can double-click an item in the list widgets of figures, axes, and lines to change the window title, axes title, and line label respectively.

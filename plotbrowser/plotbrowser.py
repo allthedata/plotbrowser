@@ -15,19 +15,21 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 try:
-    from PySide import QtCore, QtGui
-    from PySide.QtCore import Slot
-except ImportError:
     import sip
     sip.setapi('QString', 2)
     sip.setapi('QVariant', 2)
     from PyQt4 import QtCore, QtGui
-    import PyQt4.QtCore.pyqtSlot as Slot
+    from PyQt4.QtCore import pyqtSlot as Slot
+except ImportError:
+    from PySide import QtCore, QtGui
+    from PySide.QtCore import Slot
+
 from IPython.lib import guisupport
 if __name__ == '__main__':
-    from plotbrowser_ui import Ui_PlotBrowser
+    from plotbrowser_ui import Ui_PlotBrowser  # can't do relative import if run directly (for testing before packaging)
+    # only works if working directory contains plotbrowser_ui.py
 else:
-    from .plotbrowser_ui import Ui_PlotBrowser
+    from .plotbrowser_ui import Ui_PlotBrowser  # for when plotbrowser is imported
 
 
 class PlotBrowser(QtGui.QMainWindow, Ui_PlotBrowser):
@@ -173,7 +175,7 @@ class PlotBrowser(QtGui.QMainWindow, Ui_PlotBrowser):
         self.fig.canvas.draw()
 
     def lineEdit_figdims_editingFinished(self):
-        #self.fig.canvas.manager.window.geometry().getCoords()[0]
+        # self.fig.canvas.manager.window.geometry().getCoords()[0]
         self.fig.set_size_inches(float(self.lineEdit_figwidth.text()), float(self.lineEdit_figheight.text()), forward=True)
 
     @Slot()
@@ -286,7 +288,7 @@ class PlotBrowser(QtGui.QMainWindow, Ui_PlotBrowser):
     def on_listWidget_axes_itemChanged(self):
         for i in range(self.listWidget_axes.count()):
             self.fig.axes[i].set_title(self.listWidget_axes.item(i).text(), {'fontsize': self.fig.axes[i].title.get_size()})
-            #self.fig.axes[i].set_title(self.listWidget_axes.item(i).text())  # resets title fontsize to default
+            # self.fig.axes[i].set_title(self.listWidget_axes.item(i).text())  # resets title fontsize to default
         self.fig.canvas.draw()
 
     @Slot()
@@ -633,7 +635,7 @@ class PlotBrowser(QtGui.QMainWindow, Ui_PlotBrowser):
         self.comboBox_markerstyle.setCurrentIndex(index)
         self.spinBox_markersize.setValue(self.line.get_markersize())
         self.lineEdit_markercolor.setText(self.colorconverter(self.line.get_markerfacecolor()))
-        #self.on_pushButton_legendapply_clicked()
+        # self.on_pushButton_legendapply_clicked()
 
     @Slot()
     def on_listWidget_lines_itemChanged(self):
@@ -804,15 +806,15 @@ def myminortickformatter(number, pos):
 
 
 def run():
-    #app = QtGui.QApplication.instance()  # checks if QApplication already exists
-    #if not app:  # create QApplication if it doesnt exist
-    #    app = QtGui.QApplication(sys.argv)
+    # app = QtGui.QApplication.instance()  # checks if QApplication already exists
+    # if not app:  # create QApplication if it doesnt exist
+    #     app = QtGui.QApplication(sys.argv)
     app = guisupport.get_app_qt4()
     global browser  # otherwise window appears and immediately disappears
     browser = PlotBrowser()
     browser.show()
     guisupport.start_event_loop_qt4(app)
-    #app.exec_()  # this results in QCoreApplication::exec: The event loop is already running
+    # app.exec_()  # this results in QCoreApplication::exec: The event loop is already running
 
 if __name__ == '__main__':
     run()
