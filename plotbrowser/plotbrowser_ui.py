@@ -8,12 +8,12 @@
 # WARNING! All changes made in this file will be lost!
 
 try:
-    from PySide import QtCore, QtGui
-except ImportError:
     import sip
     sip.setapi('QString', 2)
     sip.setapi('QVariant', 2)
     from PyQt4 import QtCore, QtGui
+except ImportError:
+    from PySide import QtCore, QtGui
 
 class Ui_PlotBrowser(object):
     def setupUi(self, PlotBrowser):

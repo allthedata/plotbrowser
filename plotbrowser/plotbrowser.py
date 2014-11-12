@@ -11,9 +11,6 @@ interface of matplotlib when possible.
 from __future__ import nested_scopes, generators, division, absolute_import,\
     with_statement, print_function, unicode_literals
 
-import numpy as np
-import matplotlib as mpl
-import matplotlib.pyplot as plt
 try:
     import sip
     sip.setapi('QString', 2)
@@ -23,7 +20,9 @@ try:
 except ImportError:
     from PySide import QtCore, QtGui
     from PySide.QtCore import Slot
-
+import numpy as np
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 from IPython.lib import guisupport
 if __name__ == '__main__':
     from plotbrowser_ui import Ui_PlotBrowser  # can't do relative import if run directly (for testing before packaging)
@@ -94,11 +93,11 @@ class PlotBrowser(QtGui.QMainWindow, Ui_PlotBrowser):
         for i in plt.get_fignums():
             self.listWidget_figures.addItem(plt.figure(i).canvas.get_window_title())
             current_row = self.listWidget_figures.count() - 1
-            self.listWidget_figures.item(current_row).fig = plt.figure(i)
+            self.listWidget_figures.item(current_row).setData(-1, plt.figure(i))
             self.listWidget_figures.item(current_row).setFlags(self.listwidgetitemflags)
         if current_row != -1:
             self.listWidget_figures.setCurrentRow(current_row)
-            self.on_listWidget_figures_itemClicked()
+            self.on_listWidget_figures_itemClicked(self.listWidget_figures.selectedItems()[-1])
 
     def refresh_listWidget_axes(self):
         """Refreshes axeslist, clicks last item in axeslist"""
@@ -108,10 +107,11 @@ class PlotBrowser(QtGui.QMainWindow, Ui_PlotBrowser):
         for ax in self.fig.axes:
             self.listWidget_axes.addItem(ax.get_title())
             current_row = self.listWidget_axes.count() - 1
+            self.listWidget_axes.item(current_row).setData(-1, ax)
             self.listWidget_axes.item(current_row).setFlags(self.listwidgetitemflags)  # changing flags also triggers name changed but I guess that's ok
         if current_row != -1:
             self.listWidget_axes.setCurrentRow(current_row)
-            self.on_listWidget_axes_itemClicked()
+            self.on_listWidget_axes_itemClicked(self.listWidget_axes.selectedItems()[-1])
 
     def refresh_listWidget_lines(self):
         """Refreshes lineslist, clicks last item in lineslist"""
@@ -120,16 +120,17 @@ class PlotBrowser(QtGui.QMainWindow, Ui_PlotBrowser):
         for line in self.ax.lines:
             self.listWidget_lines.addItem(line.get_label())
             current_row = self.listWidget_lines.count() - 1
+            self.listWidget_lines.item(current_row).setData(-1, line)
             self.listWidget_lines.item(current_row).setFlags(self.listwidgetitemflags)
         if current_row != -1:
             self.listWidget_lines.setCurrentRow(current_row)
-            self.on_listWidget_lines_itemClicked()
+            self.on_listWidget_lines_itemClicked(self.listWidget_lines.selectedItems()[-1])
 
     # start methods for figures tab
-    @Slot()
-    def on_listWidget_figures_itemClicked(self):
+    @Slot(QtGui.QListWidgetItem)
+    def on_listWidget_figures_itemClicked(self, item):
         """Updates figures tab, calls refresh_listWidget_axes"""
-        self.fig = self.listWidget_figures.selectedItems()[-1].fig
+        self.fig = item.data(-1)
         self.fig.canvas.draw()
         self.lineEdit_figurefacecolor.setText(self.colorconverter(self.fig.get_facecolor()))
         if self.fig.patch.get_alpha() is None:
@@ -140,11 +141,9 @@ class PlotBrowser(QtGui.QMainWindow, Ui_PlotBrowser):
         self.lineEdit_figheight.setText(str(self.fig.get_size_inches()[1]))
         self.refresh_listWidget_axes()
 
-    @Slot()
-    def on_listWidget_figures_itemChanged(self):
-        itemlist = [self.listWidget_figures.item(i) for i in range(self.listWidget_figures.count())]
-        for item in itemlist:
-            item.fig.canvas.set_window_title(item.text())
+    @Slot(QtGui.QListWidgetItem)
+    def on_listWidget_figures_itemChanged(self, item):
+        item.data(-1).canvas.set_window_title(item.text())
 
     @Slot()
     def on_pushButton_makefigure_clicked(self):
@@ -191,10 +190,10 @@ class PlotBrowser(QtGui.QMainWindow, Ui_PlotBrowser):
             plt.savefig(filename, dpi=self.spinBox_dpi.value())
 
     # start methods for axes tab
-    @Slot()
-    def on_listWidget_axes_itemClicked(self):
+    @Slot(QtGui.QListWidgetItem)
+    def on_listWidget_axes_itemClicked(self, item):
         """Updates axes, grid, and spines/ticks tabs, calls refresh_listWidget_lines"""
-        self.ax = self.fig.axes[self.listWidget_axes.selectedIndexes()[-1].row()]
+        self.ax = item.data(-1)
         # updates axes tab
         if self.ax.xaxis.get_label_position() == 'bottom':
             self.checkBox_labeltop.setChecked(False)
@@ -278,17 +277,15 @@ class PlotBrowser(QtGui.QMainWindow, Ui_PlotBrowser):
         # updates grid section in lines tab
         self.checkBox_xgrid.setChecked(self.ax.xaxis.majorTicks[0].gridOn)
         self.checkBox_ygrid.setChecked(self.ax.yaxis.majorTicks[0].gridOn)
-        index = [item[0] for item in self.linestyles].index(self.ax.xaxis.majorTicks[0].gridline.get_linestyle())
+        index = [i[0] for i in self.linestyles].index(self.ax.xaxis.majorTicks[0].gridline.get_linestyle())
         self.comboBox_gridstyle.setCurrentIndex(index)
         self.doubleSpinBox_gridwidth.setValue(self.ax.xaxis.majorTicks[0].gridline.get_linewidth())
         self.lineEdit_gridcolor.setText(self.colorconverter(self.ax.xaxis.majorTicks[0].gridline.get_color()))
         self.refresh_listWidget_lines()
 
-    @Slot()
-    def on_listWidget_axes_itemChanged(self):
-        for i in range(self.listWidget_axes.count()):
-            self.fig.axes[i].set_title(self.listWidget_axes.item(i).text(), {'fontsize': self.fig.axes[i].title.get_size()})
-            # self.fig.axes[i].set_title(self.listWidget_axes.item(i).text())  # resets title fontsize to default
+    @Slot(QtGui.QListWidgetItem)
+    def on_listWidget_axes_itemChanged(self, item):
+        item.data(-1).set_title(item.text(), {'fontsize': item.data(-1).title.get_size()})
         self.fig.canvas.draw()
 
     @Slot()
@@ -337,7 +334,7 @@ class PlotBrowser(QtGui.QMainWindow, Ui_PlotBrowser):
             self.listWidget_axes.takeItem(self.listWidget_axes.selectedIndexes()[-1].row())
             self.fig.canvas.draw()
             if self.listWidget_axes.count() > 0:
-                self.on_listWidget_axes_itemClicked()
+                self.on_listWidget_axes_itemClicked(self.listWidget_axes.selectedItems()[-1])
 
     @Slot(bool)
     def on_checkBox_labeltop_clicked(self, value):
@@ -382,13 +379,13 @@ class PlotBrowser(QtGui.QMainWindow, Ui_PlotBrowser):
     def on_comboBox_xscale_currentIndexChanged(self, value):
         self.ax.set_xscale(value)
         self.fig.canvas.draw()
-        self.on_listWidget_axes_itemClicked()
+        self.on_listWidget_axes_itemClicked(self.listWidget_axes.selectedItems()[-1])
 
     @Slot(str)
     def on_comboBox_yscale_currentIndexChanged(self, value):
         self.ax.set_yscale(value)
         self.fig.canvas.draw()
-        self.on_listWidget_axes_itemClicked()
+        self.on_listWidget_axes_itemClicked(self.listWidget_axes.selectedItems()[-1])
 
     def lineEdit_limits_editingFinished(self):
         self.ax.axis([float(self.lineEdit_xmin.text()), float(self.lineEdit_xmax.text()),
@@ -399,7 +396,7 @@ class PlotBrowser(QtGui.QMainWindow, Ui_PlotBrowser):
     def on_comboBox_autoscale_currentIndexChanged(self, value):
         self.ax.axis(value)  # get setting using axes.py line 1315, not implemented yet
         self.fig.canvas.draw()
-        self.on_listWidget_axes_itemClicked()
+        self.on_listWidget_axes_itemClicked(self.listWidget_axes.selectedItems()[-1])
 
     # start methods for spines/ticks tab
     @Slot(str)
@@ -623,24 +620,23 @@ class PlotBrowser(QtGui.QMainWindow, Ui_PlotBrowser):
         self.fig.canvas.draw()
 
     # start methods for lines tab
-    @Slot()
-    def on_listWidget_lines_itemClicked(self):
+    @Slot(QtGui.QListWidgetItem)
+    def on_listWidget_lines_itemClicked(self, item):
         """Updates lines tab"""
-        self.line = self.ax.lines[self.listWidget_lines.selectedIndexes()[-1].row()]
-        index = [item[0] for item in self.linestyles].index(self.line.get_linestyle())
+        self.line = item.data(-1)
+        index = [i[0] for i in self.linestyles].index(self.line.get_linestyle())
         self.comboBox_linestyle.setCurrentIndex(index)
         self.doubleSpinBox_linewidth.setValue(self.line.get_linewidth())
         self.lineEdit_linecolor.setText(self.colorconverter(self.line.get_color()))
-        index = [item[0] for item in self.markers].index(self.line.get_marker())
+        index = [i[0] for i in self.markers].index(self.line.get_marker())
         self.comboBox_markerstyle.setCurrentIndex(index)
         self.spinBox_markersize.setValue(self.line.get_markersize())
         self.lineEdit_markercolor.setText(self.colorconverter(self.line.get_markerfacecolor()))
         # self.on_pushButton_legendapply_clicked()
 
-    @Slot()
-    def on_listWidget_lines_itemChanged(self):
-        for i in range(self.listWidget_lines.count()):
-            self.ax.lines[i].set_label(self.listWidget_lines.item(i).text())
+    @Slot(QtGui.QListWidgetItem)
+    def on_listWidget_lines_itemChanged(self, item):
+        item.data(-1).set_label(item.text())
         self.fig.canvas.draw()
 
     @Slot()
@@ -648,7 +644,7 @@ class PlotBrowser(QtGui.QMainWindow, Ui_PlotBrowser):
         x = eval(self.lineEdit_x.text())
         self.ax.plot(eval(self.lineEdit_x.text()), eval(self.lineEdit_y.text()))
         self.fig.canvas.draw()
-        self.on_listWidget_axes_itemClicked()
+        self.on_listWidget_axes_itemClicked(self.listWidget_axes.selectedItems()[-1])
 
     @Slot()
     def on_pushButton_deleteline_clicked(self):
